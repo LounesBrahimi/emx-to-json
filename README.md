@@ -10,10 +10,3 @@ Il est utile pour transformer des modèles UML générés par des outils comme E
 
 ## ⚙️ Dépendances
 - `jackson-databind` pour la conversion Java → JSON
-
-## 🚀 Utilisation
-1. Placez votre fichier `modele.emx` à la racine du projet.
-2. Compilez et exécutez :
-```bash
-mvn compile
-mvn exec:java -Dexec.mainClass="com.example.emx.EmxToJsonConverter"
