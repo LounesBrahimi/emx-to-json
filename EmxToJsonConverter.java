@@ -12,48 +12,53 @@ import java.util.Map;
 
 public class EmxToJsonConverter {
 
-    public static void main(String[] args) throws Exception {
-        File emxFile = new File(
-        EmxToJsonConverter.class.getClassLoader()
-        .getResource("modele.emx")
-        .getFile()
-        );
-
-        Document doc = DocumentBuilderFactory.newInstance()
-                .newDocumentBuilder()
-                .parse(emxFile);
-
-        doc.getDocumentElement().normalize();
-
-        Map<String, Object> jsonStructure = new LinkedHashMap<>();
-        traverse(doc.getDocumentElement(), jsonStructure);
-
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.writerWithDefaultPrettyPrinter()
-                .writeValue(new FileWriter("modele.json"), jsonStructure);
-
-        System.out.println("Conversion terminée → modele.json");
-    }
-
     private static void traverse(Node node, Map<String, Object> jsonMap) {
-        if (node.hasAttributes()) {
-            var attributes = node.getAttributes();
-            Map<String, String> attrMap = new LinkedHashMap<>();
-            for (int i = 0; i < attributes.getLength(); i++) {
-                var attr = attributes.item(i);
-                attrMap.put(attr.getNodeName(), attr.getNodeValue());
+    if (node.hasAttributes()) {
+        var attributes = node.getAttributes();
+        Map<String, String> attrMap = new LinkedHashMap<>();
+        for (int i = 0; i < attributes.getLength(); i++) {
+            var attr = attributes.item(i);
+            attrMap.put(attr.getNodeName(), attr.getNodeValue());
+        }
+
+        // Si ce noeud a déjà été rencontré, on crée ou complète une liste
+        if (jsonMap.containsKey(node.getNodeName())) {
+            Object existing = jsonMap.get(node.getNodeName());
+            if (existing instanceof List) {
+                ((List<Object>) existing).add(attrMap);
+            } else {
+                List<Object> newList = new ArrayList<>();
+                newList.add(existing);
+                newList.add(attrMap);
+                jsonMap.put(node.getNodeName(), newList);
             }
+        } else {
             jsonMap.put(node.getNodeName(), attrMap);
         }
+    }
 
-        var children = node.getChildNodes();
-        for (int i = 0; i < children.getLength(); i++) {
-            var child = children.item(i);
-            if (child.getNodeType() == Node.ELEMENT_NODE) {
-                Map<String, Object> childMap = new LinkedHashMap<>();
-                traverse(child, childMap);
-                jsonMap.put(child.getNodeName(), childMap);
+    var children = node.getChildNodes();
+    for (int i = 0; i < children.getLength(); i++) {
+        var child = children.item(i);
+        if (child.getNodeType() == Node.ELEMENT_NODE) {
+            Map<String, Object> childMap = new LinkedHashMap<>();
+            traverse(child, childMap);
+
+            if (jsonMap.containsKey(child.getNodeName())) {
+                Object existing = jsonMap.get(child.getNodeName());
+                if (existing instanceof List) {
+                    ((List<Object>) existing).add(childMap.get(child.getNodeName()));
+                } else {
+                    List<Object> newList = new ArrayList<>();
+                    newList.add(existing);
+                    newList.add(childMap.get(child.getNodeName()));
+                    jsonMap.put(child.getNodeName(), newList);
+                }
+            } else {
+                jsonMap.putAll(childMap);
             }
         }
     }
+}
+
 }
