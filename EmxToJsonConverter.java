@@ -13,7 +13,11 @@ import java.util.Map;
 public class EmxToJsonConverter {
 
     public static void main(String[] args) throws Exception {
-        File emxFile = new File("modele.emx");
+        File emxFile = new File(
+        EmxToJsonConverter.class.getClassLoader()
+        .getResource("modele.emx")
+        .getFile()
+        );
 
         Document doc = DocumentBuilderFactory.newInstance()
                 .newDocumentBuilder()
